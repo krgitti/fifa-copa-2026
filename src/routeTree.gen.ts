@@ -10,11 +10,17 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as JogosRouteImport } from './routes/jogos'
+import { Route as GruposRouteImport } from './routes/grupos'
 import { Route as IndexRouteImport } from './routes/index'
 
 const JogosRoute = JogosRouteImport.update({
   id: '/jogos',
   path: '/jogos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GruposRoute = GruposRouteImport.update({
+  id: '/grupos',
+  path: '/grupos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -25,27 +31,31 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/grupos': typeof GruposRoute
   '/jogos': typeof JogosRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/grupos': typeof GruposRoute
   '/jogos': typeof JogosRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/grupos': typeof GruposRoute
   '/jogos': typeof JogosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/jogos'
+  fullPaths: '/' | '/grupos' | '/jogos'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/jogos'
-  id: '__root__' | '/' | '/jogos'
+  to: '/' | '/grupos' | '/jogos'
+  id: '__root__' | '/' | '/grupos' | '/jogos'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  GruposRoute: typeof GruposRoute
   JogosRoute: typeof JogosRoute
 }
 
@@ -56,6 +66,13 @@ declare module '@tanstack/react-router' {
       path: '/jogos'
       fullPath: '/jogos'
       preLoaderRoute: typeof JogosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/grupos': {
+      id: '/grupos'
+      path: '/grupos'
+      fullPath: '/grupos'
+      preLoaderRoute: typeof GruposRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -70,6 +87,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  GruposRoute: GruposRoute,
   JogosRoute: JogosRoute,
 }
 export const routeTree = rootRouteImport
