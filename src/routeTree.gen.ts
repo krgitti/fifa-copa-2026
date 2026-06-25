@@ -9,38 +9,129 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as MataMataRouteImport } from './routes/mata-mata'
+import { Route as JogosRouteImport } from './routes/jogos'
+import { Route as GruposRouteImport } from './routes/grupos'
+import { Route as EstadiosRouteImport } from './routes/estadios'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as JogoIdRouteImport } from './routes/jogo.$id'
 
+const MataMataRoute = MataMataRouteImport.update({
+  id: '/mata-mata',
+  path: '/mata-mata',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JogosRoute = JogosRouteImport.update({
+  id: '/jogos',
+  path: '/jogos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GruposRoute = GruposRouteImport.update({
+  id: '/grupos',
+  path: '/grupos',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EstadiosRoute = EstadiosRouteImport.update({
+  id: '/estadios',
+  path: '/estadios',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const JogoIdRoute = JogoIdRouteImport.update({
+  id: '/jogo/$id',
+  path: '/jogo/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/estadios': typeof EstadiosRoute
+  '/grupos': typeof GruposRoute
+  '/jogos': typeof JogosRoute
+  '/mata-mata': typeof MataMataRoute
+  '/jogo/$id': typeof JogoIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/estadios': typeof EstadiosRoute
+  '/grupos': typeof GruposRoute
+  '/jogos': typeof JogosRoute
+  '/mata-mata': typeof MataMataRoute
+  '/jogo/$id': typeof JogoIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/estadios': typeof EstadiosRoute
+  '/grupos': typeof GruposRoute
+  '/jogos': typeof JogosRoute
+  '/mata-mata': typeof MataMataRoute
+  '/jogo/$id': typeof JogoIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/estadios'
+    | '/grupos'
+    | '/jogos'
+    | '/mata-mata'
+    | '/jogo/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/estadios' | '/grupos' | '/jogos' | '/mata-mata' | '/jogo/$id'
+  id:
+    | '__root__'
+    | '/'
+    | '/estadios'
+    | '/grupos'
+    | '/jogos'
+    | '/mata-mata'
+    | '/jogo/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  EstadiosRoute: typeof EstadiosRoute
+  GruposRoute: typeof GruposRoute
+  JogosRoute: typeof JogosRoute
+  MataMataRoute: typeof MataMataRoute
+  JogoIdRoute: typeof JogoIdRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/mata-mata': {
+      id: '/mata-mata'
+      path: '/mata-mata'
+      fullPath: '/mata-mata'
+      preLoaderRoute: typeof MataMataRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/jogos': {
+      id: '/jogos'
+      path: '/jogos'
+      fullPath: '/jogos'
+      preLoaderRoute: typeof JogosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/grupos': {
+      id: '/grupos'
+      path: '/grupos'
+      fullPath: '/grupos'
+      preLoaderRoute: typeof GruposRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/estadios': {
+      id: '/estadios'
+      path: '/estadios'
+      fullPath: '/estadios'
+      preLoaderRoute: typeof EstadiosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,22 +139,24 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/jogo/$id': {
+      id: '/jogo/$id'
+      path: '/jogo/$id'
+      fullPath: '/jogo/$id'
+      preLoaderRoute: typeof JogoIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  EstadiosRoute: EstadiosRoute,
+  GruposRoute: GruposRoute,
+  JogosRoute: JogosRoute,
+  MataMataRoute: MataMataRoute,
+  JogoIdRoute: JogoIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
