@@ -83,7 +83,9 @@ function TeamSide({
   align: "left" | "right";
 }) {
   return (
-    <div className={`flex min-w-0 flex-1 items-center gap-2.5 ${align === "right" ? "flex-row-reverse text-right" : ""}`}>
+    <div
+      className={`flex min-w-0 flex-1 items-center gap-2.5 ${align === "right" ? "flex-row-reverse text-right" : ""}`}
+    >
       <span className="text-2xl leading-none" aria-hidden>
         {team?.flag ?? "⚽"}
       </span>

@@ -1,18 +1,24 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { GROUPS, TEAMS, computeStandings, MATCHES } from "@/lib/worldcup-data";
+import { GROUPS, TEAMS, computeStandings, type Match } from "@/lib/worldcup-data";
 import { MatchCard } from "@/components/MatchCard";
+import { useLiveMatches } from "@/hooks/useLiveMatches";
 
 export const Route = createFileRoute("/grupos")({
   head: () => ({
     meta: [
       { title: "Grupos e Classificação · Copa 2026" },
-      { name: "description", content: "Classificação ao vivo dos 12 grupos da Copa do Mundo 2026 com pontos, saldo e jogos." },
+      {
+        name: "description",
+        content:
+          "Classificação ao vivo dos 12 grupos da Copa do Mundo 2026 com pontos, saldo e jogos.",
+      },
     ],
   }),
   component: GruposPage,
 });
 
 function GruposPage() {
+  const matches = useLiveMatches();
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <h1 className="text-3xl font-black tracking-tight">Grupos & Classificação</h1>
@@ -22,20 +28,23 @@ function GruposPage() {
 
       <div className="mt-6 grid gap-5 md:grid-cols-2">
         {Object.keys(GROUPS).map((g) => (
-          <GroupCard key={g} group={g} />
+          <GroupCard key={g} group={g} matches={matches} />
         ))}
       </div>
     </div>
   );
 }
 
-function GroupCard({ group }: { group: string }) {
-  const rows = computeStandings(group);
-  const matches = MATCHES.filter((m) => m.group === group).sort(
-    (a, b) => +new Date(a.kickoffUTC) - +new Date(b.kickoffUTC)
-  );
+function GroupCard({ group, matches }: { group: string; matches: Match[] }) {
+  const rows = computeStandings(group, matches);
+  const groupMatches = matches
+    .filter((m) => m.group === group)
+    .sort((a, b) => +new Date(a.kickoffUTC) - +new Date(b.kickoffUTC));
   return (
-    <div className="rounded-2xl border border-border p-4" style={{ background: "var(--gradient-card)" }}>
+    <div
+      className="rounded-2xl border border-border p-4"
+      style={{ background: "var(--gradient-card)" }}
+    >
       <div className="mb-3 flex items-center gap-2">
         <span
           className="grid h-8 w-8 place-items-center rounded-lg text-sm font-black text-primary-foreground"
@@ -66,7 +75,9 @@ function GroupCard({ group }: { group: string }) {
             return (
               <tr key={r.code} className="border-t border-border/50">
                 <td className="py-2">
-                  <span className={`inline-grid h-5 w-5 place-items-center rounded text-[10px] font-bold ${qualifies ? "bg-secondary text-secondary-foreground" : i === 2 ? "bg-accent/30 text-foreground" : "bg-muted text-muted-foreground"}`}>
+                  <span
+                    className={`inline-grid h-5 w-5 place-items-center rounded text-[10px] font-bold ${qualifies ? "bg-secondary text-secondary-foreground" : i === 2 ? "bg-accent/30 text-foreground" : "bg-muted text-muted-foreground"}`}
+                  >
                     {i + 1}
                   </span>
                 </td>
@@ -87,7 +98,7 @@ function GroupCard({ group }: { group: string }) {
       </table>
 
       <div className="mt-4 space-y-2">
-        {matches.map((m) => (
+        {groupMatches.map((m) => (
           <MatchCard key={m.id} match={m} compact />
         ))}
       </div>

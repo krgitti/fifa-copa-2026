@@ -1,26 +1,37 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
 import { Calendar, Trophy, MapPin, Users } from "lucide-react";
-import { MATCHES, TOURNAMENT_INFO, brasiliaDayKey } from "@/lib/worldcup-data";
+import { TOURNAMENT_INFO, brasiliaDayKey } from "@/lib/worldcup-data";
 import { MatchCard } from "@/components/MatchCard";
+import { useLiveMatches } from "@/hooks/useLiveMatches";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "Copa do Mundo 2026 — Jogos de Hoje" },
-      { name: "description", content: "Acompanhe ao vivo a FIFA Copa do Mundo 2026 com jogos, grupos, mata-mata, estádios e horários de Brasília." },
+      {
+        name: "description",
+        content:
+          "Acompanhe ao vivo a FIFA Copa do Mundo 2026 com jogos, grupos, mata-mata, estádios e horários de Brasília.",
+      },
       { property: "og:title", content: "Copa do Mundo 2026 — Jogos de Hoje" },
-      { property: "og:description", content: "Tudo da Copa 2026 em um só lugar: ao vivo, calendário, classificação e chaveamento." },
+      {
+        property: "og:description",
+        content:
+          "Tudo da Copa 2026 em um só lugar: ao vivo, calendário, classificação e chaveamento.",
+      },
     ],
   }),
   component: Index,
 });
 
 function Index() {
+  const matches = useLiveMatches();
   const todayKey = brasiliaDayKey(new Date().toISOString());
-  const todayMatches = MATCHES.filter((m) => brasiliaDayKey(m.kickoffUTC) === todayKey);
-  const liveMatches = MATCHES.filter((m) => m.status === "live");
-  const upcoming = MATCHES.filter((m) => m.status === "scheduled" && new Date(m.kickoffUTC) > new Date())
+  const todayMatches = matches.filter((m) => brasiliaDayKey(m.kickoffUTC) === todayKey);
+  const liveMatches = matches.filter((m) => m.status === "live");
+  const upcoming = matches
+    .filter((m) => m.status === "scheduled" && new Date(m.kickoffUTC) > new Date())
     .sort((a, b) => +new Date(a.kickoffUTC) - +new Date(b.kickoffUTC))
     .slice(0, 8);
 
@@ -41,14 +52,28 @@ function Index() {
           <h1 className="mt-4 text-4xl font-black leading-tight tracking-tight sm:text-5xl">
             {TOURNAMENT_INFO.name}
           </h1>
-          <p className="mt-2 text-base text-muted-foreground sm:text-lg">
-            {TOURNAMENT_INFO.hosts}
-          </p>
+          <p className="mt-2 text-base text-muted-foreground sm:text-lg">{TOURNAMENT_INFO.hosts}</p>
           <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <Stat icon={<Users className="h-4 w-4" />} label="Seleções" value={String(TOURNAMENT_INFO.teams)} />
-            <Stat icon={<Trophy className="h-4 w-4" />} label="Grupos" value={String(TOURNAMENT_INFO.groups)} />
-            <Stat icon={<MapPin className="h-4 w-4" />} label="Estádios" value={String(TOURNAMENT_INFO.stadiums)} />
-            <Stat icon={<Calendar className="h-4 w-4" />} label="Jogos" value={String(TOURNAMENT_INFO.matches)} />
+            <Stat
+              icon={<Users className="h-4 w-4" />}
+              label="Seleções"
+              value={String(TOURNAMENT_INFO.teams)}
+            />
+            <Stat
+              icon={<Trophy className="h-4 w-4" />}
+              label="Grupos"
+              value={String(TOURNAMENT_INFO.groups)}
+            />
+            <Stat
+              icon={<MapPin className="h-4 w-4" />}
+              label="Estádios"
+              value={String(TOURNAMENT_INFO.stadiums)}
+            />
+            <Stat
+              icon={<Calendar className="h-4 w-4" />}
+              label="Jogos"
+              value={String(TOURNAMENT_INFO.matches)}
+            />
           </div>
         </div>
       </section>
@@ -69,30 +94,52 @@ function Index() {
         <Section
           title="Jogos de hoje"
           badge={todayMatches.length ? `${todayMatches.length}` : "0"}
-          action={<Link to="/jogos" className="text-sm font-medium text-primary hover:underline">Ver tudo →</Link>}
+          action={
+            <Link to="/jogos" className="text-sm font-medium text-primary hover:underline">
+              Ver tudo →
+            </Link>
+          }
         >
           {todayMatches.length === 0 ? (
-            <div className="rounded-2xl border border-border p-8 text-center text-muted-foreground" style={{ background: "var(--gradient-card)" }}>
+            <div
+              className="rounded-2xl border border-border p-8 text-center text-muted-foreground"
+              style={{ background: "var(--gradient-card)" }}
+            >
               Nenhum jogo hoje no fuso de Brasília. Veja os próximos abaixo.
             </div>
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">
-              {todayMatches.map((m) => <MatchCard key={m.id} match={m} />)}
+              {todayMatches.map((m) => (
+                <MatchCard key={m.id} match={m} />
+              ))}
             </div>
           )}
         </Section>
 
         {/* Upcoming */}
-        <Section title="Próximos jogos" action={<Link to="/jogos" className="text-sm font-medium text-primary hover:underline">Calendário completo →</Link>}>
+        <Section
+          title="Próximos jogos"
+          action={
+            <Link to="/jogos" className="text-sm font-medium text-primary hover:underline">
+              Calendário completo →
+            </Link>
+          }
+        >
           <div className="grid gap-3 sm:grid-cols-2">
-            {upcoming.map((m) => <MatchCard key={m.id} match={m} />)}
+            {upcoming.map((m) => (
+              <MatchCard key={m.id} match={m} />
+            ))}
           </div>
         </Section>
 
         {/* Quick links */}
         <Section title="Explore">
           <div className="grid gap-3 sm:grid-cols-3">
-            <QuickLink to="/grupos" title="Grupos & Classificação" desc="12 grupos · pontos, saldo, jogos" />
+            <QuickLink
+              to="/grupos"
+              title="Grupos & Classificação"
+              desc="12 grupos · pontos, saldo, jogos"
+            />
             <QuickLink to="/mata-mata" title="Chaveamento" desc="32-avos → Final no MetLife" />
             <QuickLink to="/estadios" title="16 Estádios" desc="EUA · Canadá · México" />
           </div>

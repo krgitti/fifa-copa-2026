@@ -1,32 +1,40 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { MATCHES, brasiliaDayKey, formatBrasilia, TEAMS } from "@/lib/worldcup-data";
+import { brasiliaDayKey, formatBrasilia, TEAMS, type Match } from "@/lib/worldcup-data";
 import { MatchCard } from "@/components/MatchCard";
+import { useLiveMatches } from "@/hooks/useLiveMatches";
 
 export const Route = createFileRoute("/jogos")({
   head: () => ({
     meta: [
       { title: "Calendário de Jogos · Copa 2026" },
-      { name: "description", content: "Todos os 104 jogos da Copa do Mundo 2026 com data, horário de Brasília, estádio e fase." },
+      {
+        name: "description",
+        content:
+          "Todos os 104 jogos da Copa do Mundo 2026 com data, horário de Brasília, estádio e fase.",
+      },
     ],
   }),
   component: JogosPage,
 });
 
 function JogosPage() {
+  const matches = useLiveMatches();
   const [team, setTeam] = useState<string>("all");
   const [phase, setPhase] = useState<string>("all");
 
   const filtered = useMemo(() => {
-    return MATCHES.filter((m) => {
-      if (phase !== "all" && m.phase !== phase) return false;
-      if (team !== "all" && m.homeCode !== team && m.awayCode !== team) return false;
-      return true;
-    }).sort((a, b) => +new Date(a.kickoffUTC) - +new Date(b.kickoffUTC));
-  }, [team, phase]);
+    return matches
+      .filter((m) => {
+        if (phase !== "all" && m.phase !== phase) return false;
+        if (team !== "all" && m.homeCode !== team && m.awayCode !== team) return false;
+        return true;
+      })
+      .sort((a, b) => +new Date(a.kickoffUTC) - +new Date(b.kickoffUTC));
+  }, [matches, team, phase]);
 
   const grouped = useMemo(() => {
-    const map = new Map<string, typeof MATCHES>();
+    const map = new Map<string, Match[]>();
     filtered.forEach((m) => {
       const key = brasiliaDayKey(m.kickoffUTC);
       if (!map.has(key)) map.set(key, []);
@@ -52,7 +60,9 @@ function JogosPage() {
         >
           <option value="all">Todas as seleções</option>
           {teamCodes.map((c) => (
-            <option key={c} value={c}>{TEAMS[c].flag} {TEAMS[c].name}</option>
+            <option key={c} value={c}>
+              {TEAMS[c].flag} {TEAMS[c].name}
+            </option>
           ))}
         </select>
         <select
@@ -80,7 +90,9 @@ function JogosPage() {
                 {weekday} · {date}
               </h2>
               <div className="grid gap-3 sm:grid-cols-2">
-                {ms.map((m) => <MatchCard key={m.id} match={m} />)}
+                {ms.map((m) => (
+                  <MatchCard key={m.id} match={m} />
+                ))}
               </div>
             </div>
           );

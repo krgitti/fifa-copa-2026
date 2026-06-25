@@ -1,5 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { MATCHES, TEAMS, stadiumById, formatBrasilia } from "@/lib/worldcup-data";
+import { TEAMS, stadiumById, formatBrasilia, MATCHES } from "@/lib/worldcup-data";
+import { useLiveMatches } from "@/hooks/useLiveMatches";
 import { ArrowLeft, MapPin, Calendar, Clock } from "lucide-react";
 
 export const Route = createFileRoute("/jogo/$id")({
@@ -8,7 +9,12 @@ export const Route = createFileRoute("/jogo/$id")({
     const h = m?.homeCode ? TEAMS[m.homeCode].name : "TBD";
     const a = m?.awayCode ? TEAMS[m.awayCode].name : "TBD";
     const title = m ? `${h} vs ${a} · Copa 2026` : "Jogo · Copa 2026";
-    return { meta: [{ title }, { name: "description", content: `Detalhes do jogo ${h} vs ${a} na Copa do Mundo 2026.` }] };
+    return {
+      meta: [
+        { title },
+        { name: "description", content: `Detalhes do jogo ${h} vs ${a} na Copa do Mundo 2026.` },
+      ],
+    };
   },
   component: MatchDetail,
   notFoundComponent: () => (
@@ -33,7 +39,9 @@ export const Route = createFileRoute("/jogo/$id")({
 });
 
 function MatchDetail() {
-  const { match } = Route.useLoaderData();
+  const { match: initialMatch } = Route.useLoaderData();
+  const matches = useLiveMatches();
+  const match = matches.find((m) => m.id === initialMatch.id) || initialMatch;
   const { date, time, weekday } = formatBrasilia(match.kickoffUTC);
   const stadium = stadiumById(match.stadiumId);
   const home = match.homeCode ? TEAMS[match.homeCode] : null;
@@ -43,7 +51,10 @@ function MatchDetail() {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-6">
-      <Link to="/jogos" className="mb-5 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+      <Link
+        to="/jogos"
+        className="mb-5 inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground"
+      >
         <ArrowLeft className="h-4 w-4" /> Voltar
       </Link>
 
@@ -51,21 +62,30 @@ function MatchDetail() {
         className="overflow-hidden rounded-3xl border border-border"
         style={{ background: "var(--gradient-card)" }}
       >
-        <div className="border-b border-border p-6 text-center" style={{ background: "var(--gradient-hero)" }}>
+        <div
+          className="border-b border-border p-6 text-center"
+          style={{ background: "var(--gradient-hero)" }}
+        >
           <div className="text-xs font-bold uppercase tracking-wider text-primary-foreground/80">
-            {match.group ? `Grupo ${match.group} · Rodada ${match.matchday}` : phaseLabel(match.phase)}
+            {match.group
+              ? `Grupo ${match.group} · Rodada ${match.matchday}`
+              : phaseLabel(match.phase)}
           </div>
           <div className="mt-4 grid grid-cols-3 items-center gap-3 text-primary-foreground">
             <SideBig team={home} />
             <div className="text-center">
               {isDone || isLive ? (
                 <div className="text-5xl font-black tabular-nums">
-                  {match.homeScore ?? 0}<span className="mx-2">·</span>{match.awayScore ?? 0}
+                  {match.homeScore ?? 0}
+                  <span className="mx-2">·</span>
+                  {match.awayScore ?? 0}
                 </div>
               ) : (
                 <div>
                   <div className="text-3xl font-black tabular-nums">{time}</div>
-                  <div className="mt-1 text-[11px] uppercase tracking-wider opacity-80">Brasília</div>
+                  <div className="mt-1 text-[11px] uppercase tracking-wider opacity-80">
+                    Brasília
+                  </div>
                 </div>
               )}
               {isLive && (
@@ -87,7 +107,8 @@ function MatchDetail() {
             {time} (Brasília)
           </Info>
           <Info icon={<MapPin className="h-4 w-4" />} label="Estádio">
-            {stadium?.name}<br />
+            {stadium?.name}
+            <br />
             <span className="text-xs text-muted-foreground">
               {stadium?.city}, {stadium?.country}
             </span>
@@ -113,7 +134,15 @@ function SideBig({ team }: { team: { name: string; flag: string; code: string } 
   );
 }
 
-function Info({ icon, label, children }: { icon: React.ReactNode; label: string; children: React.ReactNode }) {
+function Info({
+  icon,
+  label,
+  children,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="rounded-xl border border-border bg-background/40 p-3">
       <div className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
@@ -125,12 +154,14 @@ function Info({ icon, label, children }: { icon: React.ReactNode; label: string;
 }
 
 function phaseLabel(p: string) {
-  return {
-    r32: "32-avos de Final",
-    r16: "Oitavas de Final",
-    qf: "Quartas de Final",
-    sf: "Semifinal",
-    third: "Disputa de 3º Lugar",
-    final: "FINAL",
-  }[p] ?? "Jogo";
+  return (
+    {
+      r32: "32-avos de Final",
+      r16: "Oitavas de Final",
+      qf: "Quartas de Final",
+      sf: "Semifinal",
+      third: "Disputa de 3º Lugar",
+      final: "FINAL",
+    }[p] ?? "Jogo"
+  );
 }

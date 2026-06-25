@@ -37,10 +37,11 @@ export function SiteHeader() {
               to={item.to}
               activeOptions={{ exact: item.to === "/" }}
               activeProps={{
-                className:
-                  "bg-primary/15 text-foreground ring-1 ring-primary/40",
+                className: "bg-primary/15 text-foreground ring-1 ring-primary/40",
               }}
-              inactiveProps={{ className: "text-muted-foreground hover:text-foreground hover:bg-muted/60" }}
+              inactiveProps={{
+                className: "text-muted-foreground hover:text-foreground hover:bg-muted/60",
+              }}
               className="rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors"
             >
               {item.label}

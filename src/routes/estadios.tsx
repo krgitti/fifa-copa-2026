@@ -1,12 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { STADIUMS, MATCHES } from "@/lib/worldcup-data";
+import { STADIUMS } from "@/lib/worldcup-data";
+import { useLiveMatches } from "@/hooks/useLiveMatches";
 import { MapPin, Users } from "lucide-react";
 
 export const Route = createFileRoute("/estadios")({
   head: () => ({
     meta: [
       { title: "Estádios · Copa 2026" },
-      { name: "description", content: "Os 16 estádios da Copa do Mundo 2026 nos Estados Unidos, Canadá e México." },
+      {
+        name: "description",
+        content: "Os 16 estádios da Copa do Mundo 2026 nos Estados Unidos, Canadá e México.",
+      },
     ],
   }),
   component: EstadiosPage,
@@ -15,6 +19,7 @@ export const Route = createFileRoute("/estadios")({
 const FLAG: Record<string, string> = { USA: "🇺🇸", Canada: "🇨🇦", Mexico: "🇲🇽" };
 
 function EstadiosPage() {
+  const matches = useLiveMatches();
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">
       <h1 className="text-3xl font-black tracking-tight">Estádios</h1>
@@ -24,7 +29,7 @@ function EstadiosPage() {
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {STADIUMS.map((s) => {
-          const games = MATCHES.filter((m) => m.stadiumId === s.id).length;
+          const games = matches.filter((m) => m.stadiumId === s.id).length;
           return (
             <div
               key={s.id}
