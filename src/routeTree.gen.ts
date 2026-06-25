@@ -9,10 +9,16 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as MataMataRouteImport } from './routes/mata-mata'
 import { Route as JogosRouteImport } from './routes/jogos'
 import { Route as GruposRouteImport } from './routes/grupos'
 import { Route as IndexRouteImport } from './routes/index'
 
+const MataMataRoute = MataMataRouteImport.update({
+  id: '/mata-mata',
+  path: '/mata-mata',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const JogosRoute = JogosRouteImport.update({
   id: '/jogos',
   path: '/jogos',
@@ -33,34 +39,45 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/grupos': typeof GruposRoute
   '/jogos': typeof JogosRoute
+  '/mata-mata': typeof MataMataRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/grupos': typeof GruposRoute
   '/jogos': typeof JogosRoute
+  '/mata-mata': typeof MataMataRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/grupos': typeof GruposRoute
   '/jogos': typeof JogosRoute
+  '/mata-mata': typeof MataMataRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/grupos' | '/jogos'
+  fullPaths: '/' | '/grupos' | '/jogos' | '/mata-mata'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/grupos' | '/jogos'
-  id: '__root__' | '/' | '/grupos' | '/jogos'
+  to: '/' | '/grupos' | '/jogos' | '/mata-mata'
+  id: '__root__' | '/' | '/grupos' | '/jogos' | '/mata-mata'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   GruposRoute: typeof GruposRoute
   JogosRoute: typeof JogosRoute
+  MataMataRoute: typeof MataMataRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/mata-mata': {
+      id: '/mata-mata'
+      path: '/mata-mata'
+      fullPath: '/mata-mata'
+      preLoaderRoute: typeof MataMataRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/jogos': {
       id: '/jogos'
       path: '/jogos'
@@ -89,6 +106,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   GruposRoute: GruposRoute,
   JogosRoute: JogosRoute,
+  MataMataRoute: MataMataRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
