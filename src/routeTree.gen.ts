@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as MataMataRouteImport } from './routes/mata-mata'
 import { Route as JogosRouteImport } from './routes/jogos'
 import { Route as GruposRouteImport } from './routes/grupos'
+import { Route as EstadiosRouteImport } from './routes/estadios'
 import { Route as IndexRouteImport } from './routes/index'
 
 const MataMataRoute = MataMataRouteImport.update({
@@ -29,6 +30,11 @@ const GruposRoute = GruposRouteImport.update({
   path: '/grupos',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EstadiosRoute = EstadiosRouteImport.update({
+  id: '/estadios',
+  path: '/estadios',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -37,12 +43,14 @@ const IndexRoute = IndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/estadios': typeof EstadiosRoute
   '/grupos': typeof GruposRoute
   '/jogos': typeof JogosRoute
   '/mata-mata': typeof MataMataRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/estadios': typeof EstadiosRoute
   '/grupos': typeof GruposRoute
   '/jogos': typeof JogosRoute
   '/mata-mata': typeof MataMataRoute
@@ -50,20 +58,22 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/estadios': typeof EstadiosRoute
   '/grupos': typeof GruposRoute
   '/jogos': typeof JogosRoute
   '/mata-mata': typeof MataMataRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/grupos' | '/jogos' | '/mata-mata'
+  fullPaths: '/' | '/estadios' | '/grupos' | '/jogos' | '/mata-mata'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/grupos' | '/jogos' | '/mata-mata'
-  id: '__root__' | '/' | '/grupos' | '/jogos' | '/mata-mata'
+  to: '/' | '/estadios' | '/grupos' | '/jogos' | '/mata-mata'
+  id: '__root__' | '/' | '/estadios' | '/grupos' | '/jogos' | '/mata-mata'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  EstadiosRoute: typeof EstadiosRoute
   GruposRoute: typeof GruposRoute
   JogosRoute: typeof JogosRoute
   MataMataRoute: typeof MataMataRoute
@@ -92,6 +102,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GruposRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/estadios': {
+      id: '/estadios'
+      path: '/estadios'
+      fullPath: '/estadios'
+      preLoaderRoute: typeof EstadiosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -104,6 +121,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  EstadiosRoute: EstadiosRoute,
   GruposRoute: GruposRoute,
   JogosRoute: JogosRoute,
   MataMataRoute: MataMataRoute,
