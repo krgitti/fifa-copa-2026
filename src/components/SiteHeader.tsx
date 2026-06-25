@@ -19,7 +19,7 @@ export function SiteHeader() {
             style={{ background: "var(--gradient-hero)" }}
             aria-hidden
           >
-            <Trophy className="h-4.5 w-4.5" strokeWidth={2.4} />
+            <Trophy className="h-5 w-5" strokeWidth={2.4} />
           </span>
           <span className="flex flex-col leading-none">
             <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
