@@ -78,13 +78,17 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Copa 2026 — Acompanhe em Tempo Real" },
-      { name: "description", content: "Tudo sobre a FIFA Copa do Mundo 2026: jogos ao vivo, grupos, chaves, classificação, estádios e horários de Brasília." },
-      { property: "og:title", content: "Copa 2026 — Acompanhe em Tempo Real" },
-      { property: "og:description", content: "Jogos, grupos, mata-mata, estádios e classificação da Copa do Mundo FIFA 2026." },
+      { title: "Copa Fifa 2026 — Acompanhe em Tempo Real" },
+      { name: "description", content: "Tudo sobre a FIFA Copa do Mundo 2026: jogos ao vivo, grupos, chaves, classificação, estádios." },
+      { property: "og:title", content: "Copa Fifa 2026 — Acompanhe em Tempo Real" },
+      { property: "og:description", content: "Tudo sobre a FIFA Copa do Mundo 2026: jogos ao vivo, grupos, chaves, classificação, estádios." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:title", content: "Copa Fifa 2026 — Acompanhe em Tempo Real" },
+      { name: "twitter:description", content: "Tudo sobre a FIFA Copa do Mundo 2026: jogos ao vivo, grupos, chaves, classificação, estádios." },
+      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/365d8ada-28cf-4a10-b597-ddc2b4637154" },
+      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/365d8ada-28cf-4a10-b597-ddc2b4637154" },
     ],
     links: [
       {
