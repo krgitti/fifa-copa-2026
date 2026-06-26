@@ -258,6 +258,11 @@ async function fetchLiveScores() {
 
     if (updated) {
       updateGlobalMatches(newMatches);
+    } else {
+      // Notify listeners so the "Atualizado HH:MM" indicator refreshes
+      // even when the API didn't change any score.
+      lastUpdated = Date.now();
+      listeners.forEach((l) => l(globalMatchesCache));
     }
   } catch (err) {
     console.error("Error updating live scores:", err);
