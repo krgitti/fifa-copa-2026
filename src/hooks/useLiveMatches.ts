@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
 import { MATCHES, type Match } from "@/lib/worldcup-data";
+import { fetchApiFootballFixtures } from "@/lib/fixtures.functions";
 
 const englishNameToCode: Record<string, string> = {
   Algeria: "ALG",
@@ -85,6 +86,8 @@ let globalMatchesCache: Match[] = [...MATCHES];
 let lastUpdated: number | null = null;
 let listeners: Array<(matches: Match[]) => void> = [];
 let isFetching = false;
+let isFetchingApiFootball = false;
+let lastApiFootballAt = 0;
 
 function updateGlobalMatches(updated: Match[]) {
   globalMatchesCache = updated;
@@ -271,6 +274,81 @@ async function fetchLiveScores() {
   }
 }
 
+async function fetchApiFootballScores(force = false) {
+  if (isFetchingApiFootball) return;
+  // Throttle: api-football free tier ~100 req/day. Default to 5 min between calls.
+  if (!force && Date.now() - lastApiFootballAt < 5 * 60 * 1000) return;
+  isFetchingApiFootball = true;
+  try {
+    const { fixtures, error } = await fetchApiFootballFixtures();
+    lastApiFootballAt = Date.now();
+    if (error || fixtures.length === 0) return;
+
+    let updated = false;
+    const next = globalMatchesCache.map((m) => {
+      // Try team match
+      let fx = null as null | (typeof fixtures)[number];
+      if (m.homeCode && m.awayCode) {
+        for (const f of fixtures) {
+          const hc = englishNameToCode[f.home.name];
+          const ac = englishNameToCode[f.away.name];
+          if (
+            (hc === m.homeCode && ac === m.awayCode) ||
+            (hc === m.awayCode && ac === m.homeCode)
+          ) {
+            fx = f;
+            break;
+          }
+        }
+      }
+      // Stadium + time fallback
+      if (!fx) {
+        const matchTime = new Date(m.kickoffUTC).getTime();
+        for (const f of fixtures) {
+          if (!f.venue) continue;
+          const sid = stadiumMapping[f.venue];
+          if (sid !== m.stadiumId) continue;
+          if (Math.abs(new Date(f.utcDate).getTime() - matchTime) < 3 * 60 * 60 * 1000) {
+            fx = f;
+            break;
+          }
+        }
+      }
+      if (!fx) return m;
+
+      const hc = englishNameToCode[fx.home.name] || m.homeCode;
+      const ac = englishNameToCode[fx.away.name] || m.awayCode;
+      const homeScore = fx.home.goals;
+      const awayScore = fx.away.goals;
+      let status = m.status;
+      const s = fx.status;
+      if (s === "FT" || s === "AET" || s === "PEN") status = "finished";
+      else if (s === "1H" || s === "2H" || s === "HT" || s === "ET" || s === "BT" || s === "P" || s === "LIVE")
+        status = "live";
+      const group = m.phase === "group" && fx.league.group ? fx.league.group : m.group;
+      const kickoffUTC = fx.utcDate && !isNaN(new Date(fx.utcDate).getTime()) ? fx.utcDate : m.kickoffUTC;
+      if (
+        m.homeScore !== homeScore ||
+        m.awayScore !== awayScore ||
+        m.status !== status ||
+        m.kickoffUTC !== kickoffUTC ||
+        m.group !== group ||
+        m.homeCode !== hc ||
+        m.awayCode !== ac
+      ) {
+        updated = true;
+        return { ...m, homeCode: hc, awayCode: ac, homeScore, awayScore, status, kickoffUTC, group, placeholder: hc && ac ? undefined : m.placeholder };
+      }
+      return m;
+    });
+    if (updated) updateGlobalMatches(next);
+  } catch (e) {
+    console.error("api-football fallback error", e);
+  } finally {
+    isFetchingApiFootball = false;
+  }
+}
+
 export function useLiveMatches() {
   const [matches, setMatches] = useState<Match[]>(globalMatchesCache);
   const [updatedAt, setUpdatedAt] = useState<number | null>(lastUpdated);
@@ -283,13 +361,19 @@ export function useLiveMatches() {
     listeners.push(listener);
 
     fetchLiveScores();
+    fetchApiFootballScores(true);
     const interval = setInterval(fetchLiveScores, 60_000);
-    const onFocus = () => fetchLiveScores();
+    const apiFootballInterval = setInterval(() => fetchApiFootballScores(), 5 * 60_000);
+    const onFocus = () => {
+      fetchLiveScores();
+      fetchApiFootballScores();
+    };
     window.addEventListener("focus", onFocus);
 
     return () => {
       listeners = listeners.filter((l) => l !== listener);
       clearInterval(interval);
+      clearInterval(apiFootballInterval);
       window.removeEventListener("focus", onFocus);
     };
   }, []);
@@ -306,5 +390,11 @@ export function useLiveMatchesMeta() {
       listeners = listeners.filter((l) => l !== listener);
     };
   }, []);
-  return { updatedAt, refresh: () => fetchLiveScores() };
+  return {
+    updatedAt,
+    refresh: () => {
+      fetchLiveScores();
+      fetchApiFootballScores(true);
+    },
+  };
 }
