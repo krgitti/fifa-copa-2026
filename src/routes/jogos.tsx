@@ -72,7 +72,7 @@ function JogosPage() {
         >
           <option value="all">Todas as fases</option>
           <option value="group">Fase de Grupos</option>
-          <option value="r32">32-avos</option>
+          <option value="r32">16-avos de final</option>
           <option value="r16">Oitavas</option>
           <option value="qf">Quartas</option>
           <option value="sf">Semifinais</option>

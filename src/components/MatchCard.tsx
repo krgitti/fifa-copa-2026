@@ -4,7 +4,7 @@ import { formatBrasilia, stadiumById, TEAMS, type Match } from "@/lib/worldcup-d
 
 const PHASE_LABEL: Record<Match["phase"], string> = {
   group: "Grupo",
-  r32: "32-avos",
+  r32: "16-avos de final",
   r16: "Oitavas",
   qf: "Quartas",
   sf: "Semifinal",
@@ -86,18 +86,13 @@ function TeamSide({
     <div
       className={`flex min-w-0 flex-1 items-center gap-2.5 ${align === "right" ? "flex-row-reverse text-right" : ""}`}
     >
-      <span className="text-2xl leading-none" aria-hidden>
+      <span className="text-3xl leading-none" aria-hidden>
         {team?.flag ?? "⚽"}
       </span>
       <div className="min-w-0">
         <div className="truncate text-sm font-semibold">
           {team?.name ?? placeholder ?? "A definir"}
         </div>
-        {team && (
-          <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-            {team.code}
-          </div>
-        )}
       </div>
     </div>
   );

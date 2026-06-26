@@ -156,7 +156,7 @@ function Info({
 function phaseLabel(p: string) {
   return (
     {
-      r32: "32-avos de Final",
+      r32: "16-avos de Final",
       r16: "Oitavas de Final",
       qf: "Quartas de Final",
       sf: "Semifinal",
