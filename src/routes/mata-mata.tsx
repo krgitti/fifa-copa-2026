@@ -10,7 +10,7 @@ export const Route = createFileRoute("/mata-mata")({
       {
         name: "description",
         content:
-          "Bracket completo da Copa do Mundo 2026: 32-avos, oitavas, quartas, semis, 3º lugar e final.",
+          "Bracket completo da Copa do Mundo 2026: 16-avos de final, oitavas, quartas, semis, 3º lugar e final.",
       },
     ],
   }),
@@ -18,7 +18,7 @@ export const Route = createFileRoute("/mata-mata")({
 });
 
 const PHASES: Array<{ key: Match["phase"]; label: string }> = [
-  { key: "r32", label: "32-avos" },
+  { key: "r32", label: "16-avos de final" },
   { key: "r16", label: "Oitavas" },
   { key: "qf", label: "Quartas" },
   { key: "sf", label: "Semifinais" },
@@ -32,7 +32,7 @@ function MataMata() {
     <div className="mx-auto max-w-6xl px-4 py-8">
       <h1 className="text-3xl font-black tracking-tight">Mata-mata</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Do 32-avos até a grande final no MetLife Stadium em 19 de julho.
+        Dos 16-avos de final até a grande final no MetLife Stadium em 19 de julho.
       </p>
 
       <div className="mt-6 space-y-8">
