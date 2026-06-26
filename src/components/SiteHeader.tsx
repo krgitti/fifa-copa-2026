@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { Trophy } from "lucide-react";
+import { Trophy, RefreshCw } from "lucide-react";
+import { useLiveMatchesMeta } from "@/hooks/useLiveMatches";
 
 const NAV = [
   { to: "/", label: "Hoje" },
@@ -10,6 +11,14 @@ const NAV = [
 ] as const;
 
 export function SiteHeader() {
+  const { updatedAt, refresh } = useLiveMatchesMeta();
+  const updatedLabel = updatedAt
+    ? new Intl.DateTimeFormat("pt-BR", {
+        timeZone: "America/Sao_Paulo",
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(new Date(updatedAt))
+    : "—";
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
@@ -48,8 +57,17 @@ export function SiteHeader() {
             </Link>
           ))}
         </nav>
-        <div className="hidden text-xs text-muted-foreground sm:block">
-          🇧🇷 Horário de Brasília (UTC−3)
+        <div className="hidden items-center gap-3 text-xs text-muted-foreground sm:flex">
+          <span>🇧🇷 Brasília (UTC−3)</span>
+          <button
+            type="button"
+            onClick={() => refresh()}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/30 px-2.5 py-1 font-medium hover:border-primary/60 hover:text-foreground"
+            title="Atualizar placares ao vivo"
+          >
+            <RefreshCw className="h-3 w-3" />
+            <span>Atualizado {updatedLabel}</span>
+          </button>
         </div>
       </div>
       <nav className="flex gap-1 overflow-x-auto border-t border-border px-3 py-2 md:hidden">
