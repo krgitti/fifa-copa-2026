@@ -23,7 +23,7 @@ function GruposPage() {
     <div className="mx-auto max-w-6xl px-4 py-8">
       <h1 className="text-3xl font-black tracking-tight">Grupos & Classificação</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        12 grupos · 48 seleções · os 2 primeiros e os 8 melhores 3ºs avançam aos 32-avos.
+        12 grupos · 48 seleções · os 2 primeiros e os 8 melhores 3ºs avançam aos 16-avos de final.
       </p>
 
       <div className="mt-6 grid gap-5 md:grid-cols-2">
