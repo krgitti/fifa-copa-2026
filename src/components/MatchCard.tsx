@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { MapPin } from "lucide-react";
 import { formatBrasilia, stadiumById, TEAMS, type Match } from "@/lib/worldcup-data";
+import { Flag } from "@/components/Flag";
 
 const PHASE_LABEL: Record<Match["phase"], string> = {
   group: "Grupo",
@@ -78,7 +79,7 @@ function TeamSide({
   placeholder,
   align,
 }: {
-  team: ReturnType<typeof getTeam>;
+  team: { code: string; name: string; flag: string } | null;
   placeholder?: string;
   align: "left" | "right";
 }) {
@@ -86,9 +87,7 @@ function TeamSide({
     <div
       className={`flex min-w-0 flex-1 items-center gap-2.5 ${align === "right" ? "flex-row-reverse text-right" : ""}`}
     >
-      <span className="text-3xl leading-none" aria-hidden>
-        {team?.flag ?? "⚽"}
-      </span>
+      <Flag code={team?.code ?? null} size="md" />
       <div className="min-w-0">
         <div className="truncate text-sm font-semibold">
           {team?.name ?? placeholder ?? "A definir"}
@@ -96,8 +95,4 @@ function TeamSide({
       </div>
     </div>
   );
-}
-
-function getTeam() {
-  return null as null | { code: string; name: string; flag: string };
 }
