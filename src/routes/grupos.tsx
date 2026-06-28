@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { GROUPS, TEAMS, computeStandings, type Match } from "@/lib/worldcup-data";
 import { MatchCard } from "@/components/MatchCard";
 import { useLiveMatches } from "@/hooks/useLiveMatches";
+import { Flag } from "@/components/Flag";
 
 export const Route = createFileRoute("/grupos")({
   head: () => ({
@@ -82,8 +83,10 @@ function GroupCard({ group, matches }: { group: string; matches: Match[] }) {
                   </span>
                 </td>
                 <td className="py-2">
-                  <span className="mr-1.5">{t.flag}</span>
-                  <span className="font-semibold">{t.name}</span>
+                  <span className="inline-flex items-center gap-2">
+                    <Flag code={r.code} size="sm" />
+                    <span className="font-semibold">{t.name}</span>
+                  </span>
                 </td>
                 <td className="py-2 text-center tabular-nums">{r.played}</td>
                 <td className="py-2 text-center tabular-nums">{r.won}</td>
