@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { MATCHES, resolveKnockoutTeams, type Match } from "@/lib/worldcup-data";
 import { fetchApiFootballFixtures } from "@/lib/fixtures.functions";
+import { fetchSportsDbWindow } from "@/lib/sportsdb.functions";
 
 const englishNameToCode: Record<string, string> = {
   Algeria: "ALG",
@@ -13,6 +14,7 @@ const englishNameToCode: Record<string, string> = {
   "Bosnia-Herzegovina": "BIH",
   Brazil: "BRA",
   "Cabo Verde": "CPV",
+  "Cape Verde": "CPV",
   Canada: "CAN",
   Colombia: "COL",
   "Congo DR": "COD",
@@ -95,50 +97,16 @@ function updateGlobalMatches(updated: Match[]) {
   listeners.forEach((l) => l(globalMatchesCache));
 }
 
-function delay(ms: number) {
-  return new Promise((r) => setTimeout(r, ms));
-}
-
 async function fetchLiveScores() {
   if (isFetching) return;
   isFetching = true;
 
   try {
-    // Cover a 10-day window (past 6, today, next 3) so finalised + upcoming
-    // games both get the real TheSportsDB times and scores.
-    const dates: string[] = [];
-    const today = new Date();
-    for (let i = -6; i <= 3; i++) {
-      const d = new Date(today);
-      d.setUTCDate(today.getUTCDate() + i);
-      dates.push(d.toISOString().split("T")[0]);
-    }
-
+    // TheSportsDB blocks CORS from browsers, so we proxy through a server
+    // function that fans out across a ~12-day window and returns the events.
+    const { events } = await fetchSportsDbWindow();
     const fetchedMatchesMap = new Map<string, any>();
-
-    for (const date of dates) {
-      try {
-        const res = await fetch(
-          `https://www.thesportsdb.com/api/v1/json/3/eventsday.php?d=${date}&l=4429`,
-          { cache: "no-store" },
-        );
-        if (res.status === 429) {
-          // Backoff and skip this date — try again on the next poll cycle.
-          await delay(800);
-          continue;
-        }
-        const data = await res.json();
-        if (data && data.events) {
-          data.events.forEach((event: any) => {
-            fetchedMatchesMap.set(event.idEvent, event);
-          });
-        }
-      } catch (error) {
-        console.error(`Error fetching scores for date ${date}:`, error);
-      }
-      // Throttle so we don't trip TheSportsDB's free-tier rate-limit.
-      await delay(350);
-    }
+    events.forEach((event) => fetchedMatchesMap.set(event.idEvent, event));
 
     if (fetchedMatchesMap.size === 0) {
       isFetching = false;
