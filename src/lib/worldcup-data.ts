@@ -1816,3 +1816,74 @@ export const TOURNAMENT_INFO = {
   stadiums: 16,
   matches: 104,
 };
+
+/**
+ * Returns mathematically clinched first/second place for each group.
+ * - `first` is filled when a team's points exceed every other team's max possible points.
+ * - `second` is filled when the top-2 are mathematically locked (1st clinched AND 2nd's
+ *   points exceed every team outside the top-2's max possible points).
+ */
+export function getClinchedQualifiers(
+  matches: Match[] = MATCHES,
+): Record<string, { first?: string; second?: string }> {
+  const result: Record<string, { first?: string; second?: string }> = {};
+  for (const g of Object.keys(GROUPS)) {
+    const standings = computeStandings(g, matches);
+    const groupMatches = matches.filter((m) => m.phase === "group" && m.group === g);
+    const remainingByTeam: Record<string, number> = {};
+    GROUPS[g].forEach((t) => {
+      remainingByTeam[t] = groupMatches.filter(
+        (m) => m.status !== "finished" && (m.homeCode === t || m.awayCode === t),
+      ).length;
+    });
+    const maxPossible = (code: string) => {
+      const row = standings.find((s) => s.code === code);
+      return (row?.pts ?? 0) + (remainingByTeam[code] ?? 0) * 3;
+    };
+    const obj: { first?: string; second?: string } = {};
+    const [first, second, third, fourth] = standings;
+    if (first && standings.slice(1).every((s) => first.pts > maxPossible(s.code))) {
+      obj.first = first.code;
+    }
+    if (
+      first &&
+      second &&
+      third &&
+      second.pts > maxPossible(third.code) &&
+      (!fourth || second.pts > maxPossible(fourth.code))
+    ) {
+      // Top-2 locked. Only assign explicit 2nd when 1st is also locked, otherwise
+      // we don't know which of the two takes 1st vs 2nd.
+      if (obj.first === first.code) obj.second = second.code;
+    }
+    result[g] = obj;
+  }
+  return result;
+}
+
+/**
+ * Resolves knockout placeholders ("Vencedor Grupo X" / "Segundo Grupo Y") into
+ * homeCode/awayCode whenever the group qualifiers are mathematically clinched.
+ * Third-place placeholders are left untouched (cross-group pairings depend on the
+ * full ranking which only finalises after every group game).
+ */
+export function resolveKnockoutTeams(matches: Match[]): Match[] {
+  const clinched = getClinchedQualifiers(matches);
+  const resolveSide = (s: string): string | null => {
+    const win = /Vencedor\s+Grupo\s+([A-L])/i.exec(s);
+    if (win) return clinched[win[1].toUpperCase()]?.first ?? null;
+    const sec = /Segundo\s+Grupo\s+([A-L])/i.exec(s);
+    if (sec) return clinched[sec[1].toUpperCase()]?.second ?? null;
+    return null;
+  };
+  return matches.map((m) => {
+    if (m.phase !== "r32" || !m.placeholder) return m;
+    if (m.homeCode && m.awayCode) return m;
+    const parts = m.placeholder.split(/\s+vs\s+/i);
+    if (parts.length !== 2) return m;
+    const hc = m.homeCode ?? resolveSide(parts[0]);
+    const ac = m.awayCode ?? resolveSide(parts[1]);
+    if (hc === m.homeCode && ac === m.awayCode) return m;
+    return { ...m, homeCode: hc, awayCode: ac };
+  });
+}
