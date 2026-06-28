@@ -97,10 +97,6 @@ function updateGlobalMatches(updated: Match[]) {
   listeners.forEach((l) => l(globalMatchesCache));
 }
 
-function delay(ms: number) {
-  return new Promise((r) => setTimeout(r, ms));
-}
-
 async function fetchLiveScores() {
   if (isFetching) return;
   isFetching = true;
