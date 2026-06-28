@@ -1,6 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { TEAMS, stadiumById, formatBrasilia, MATCHES } from "@/lib/worldcup-data";
 import { useLiveMatches } from "@/hooks/useLiveMatches";
+import { Flag } from "@/components/Flag";
 import { ArrowLeft, MapPin, Calendar, Clock } from "lucide-react";
 
 export const Route = createFileRoute("/jogo/$id")({
@@ -128,7 +129,7 @@ function MatchDetail() {
 function SideBig({ team }: { team: { name: string; flag: string; code: string } | null }) {
   return (
     <div className="flex flex-col items-center gap-2">
-      <span className="text-5xl leading-none">{team?.flag ?? "⚽"}</span>
+      <Flag code={team?.code ?? null} size="xl" />
       <div className="text-sm font-bold">{team?.name ?? "A definir"}</div>
     </div>
   );
