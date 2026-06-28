@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useEffect } from "react";
-import { MATCHES, type Match } from "@/lib/worldcup-data";
+import { MATCHES, resolveKnockoutTeams, type Match } from "@/lib/worldcup-data";
 import { fetchApiFootballFixtures } from "@/lib/fixtures.functions";
 
 const englishNameToCode: Record<string, string> = {
@@ -82,7 +82,7 @@ const stadiumMapping: Record<string, string> = {
   "Lumen Field": "lumen",
 };
 
-let globalMatchesCache: Match[] = [...MATCHES];
+let globalMatchesCache: Match[] = resolveKnockoutTeams([...MATCHES]);
 let lastUpdated: number | null = null;
 let listeners: Array<(matches: Match[]) => void> = [];
 let isFetching = false;
@@ -90,7 +90,7 @@ let isFetchingApiFootball = false;
 let lastApiFootballAt = 0;
 
 function updateGlobalMatches(updated: Match[]) {
-  globalMatchesCache = updated;
+  globalMatchesCache = resolveKnockoutTeams(updated);
   lastUpdated = Date.now();
   listeners.forEach((l) => l(globalMatchesCache));
 }
