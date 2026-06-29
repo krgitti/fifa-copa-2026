@@ -692,8 +692,8 @@ export const MATCHES: Match[] = [
     stadiumId: "nrg",
     homeCode: "POR",
     awayCode: "COD",
-    homeScore: 2,
-    awayScore: 0,
+    homeScore: 1,
+    awayScore: 1,
     status: "finished",
   },
   {
@@ -1017,7 +1017,7 @@ export const MATCHES: Match[] = [
     stadiumId: "akron",
     homeCode: "COL",
     awayCode: "COD",
-    homeScore: 2,
+    homeScore: 1,
     awayScore: 0,
     status: "finished",
   },
@@ -1134,9 +1134,9 @@ export const MATCHES: Match[] = [
     stadiumId: "att",
     homeCode: "JPN",
     awayCode: "SWE",
-    homeScore: null,
-    awayScore: null,
-    status: "scheduled",
+    homeScore: 1,
+    awayScore: 1,
+    status: "finished",
   },
   {
     id: "58",
@@ -1147,9 +1147,9 @@ export const MATCHES: Match[] = [
     stadiumId: "arrowhead",
     homeCode: "TUN",
     awayCode: "NED",
-    homeScore: null,
-    awayScore: null,
-    status: "scheduled",
+    homeScore: 1,
+    awayScore: 3,
+    status: "finished",
   },
   {
     id: "59",
@@ -1199,9 +1199,9 @@ export const MATCHES: Match[] = [
     stadiumId: "bmo",
     homeCode: "SEN",
     awayCode: "IRQ",
-    homeScore: null,
-    awayScore: null,
-    status: "scheduled",
+    homeScore: 5,
+    awayScore: 0,
+    status: "finished",
   },
   {
     id: "63",
@@ -1251,9 +1251,9 @@ export const MATCHES: Match[] = [
     stadiumId: "akron",
     homeCode: "URU",
     awayCode: "ESP",
-    homeScore: null,
-    awayScore: null,
-    status: "scheduled",
+    homeScore: 0,
+    awayScore: 1,
+    status: "finished",
   },
   {
     id: "67",
@@ -1264,9 +1264,9 @@ export const MATCHES: Match[] = [
     stadiumId: "metlife",
     homeCode: "PAN",
     awayCode: "ENG",
-    homeScore: null,
-    awayScore: null,
-    status: "scheduled",
+    homeScore: 0,
+    awayScore: 2,
+    status: "finished",
   },
   {
     id: "68",
@@ -1277,9 +1277,9 @@ export const MATCHES: Match[] = [
     stadiumId: "lincoln",
     homeCode: "CRO",
     awayCode: "GHA",
-    homeScore: null,
-    awayScore: null,
-    status: "scheduled",
+    homeScore: 2,
+    awayScore: 1,
+    status: "finished",
   },
   {
     id: "69",
@@ -1316,9 +1316,9 @@ export const MATCHES: Match[] = [
     stadiumId: "hardrock",
     homeCode: "COL",
     awayCode: "POR",
-    homeScore: null,
-    awayScore: null,
-    status: "scheduled",
+    homeScore: 0,
+    awayScore: 0,
+    status: "finished",
   },
   {
     id: "72",
@@ -1329,9 +1329,9 @@ export const MATCHES: Match[] = [
     stadiumId: "mb",
     homeCode: "COD",
     awayCode: "UZB",
-    homeScore: null,
-    awayScore: null,
-    status: "scheduled",
+    homeScore: 3,
+    awayScore: 1,
+    status: "finished",
   },
   {
     id: "73",
@@ -1825,11 +1825,12 @@ export const TOURNAMENT_INFO = {
  */
 export function getClinchedQualifiers(
   matches: Match[] = MATCHES,
-): Record<string, { first?: string; second?: string }> {
-  const result: Record<string, { first?: string; second?: string }> = {};
+): Record<string, { first?: string; second?: string; third?: string }> {
+  const result: Record<string, { first?: string; second?: string; third?: string }> = {};
   for (const g of Object.keys(GROUPS)) {
     const standings = computeStandings(g, matches);
     const groupMatches = matches.filter((m) => m.phase === "group" && m.group === g);
+    const groupFinished = groupMatches.every((m) => m.status === "finished");
     const remainingByTeam: Record<string, number> = {};
     GROUPS[g].forEach((t) => {
       remainingByTeam[t] = groupMatches.filter(
@@ -1840,8 +1841,12 @@ export function getClinchedQualifiers(
       const row = standings.find((s) => s.code === code);
       return (row?.pts ?? 0) + (remainingByTeam[code] ?? 0) * 3;
     };
-    const obj: { first?: string; second?: string } = {};
+    const obj: { first?: string; second?: string; third?: string } = {};
     const [first, second, third, fourth] = standings;
+    if (groupFinished) {
+      result[g] = { first: first?.code, second: second?.code, third: third?.code };
+      continue;
+    }
     if (first && standings.slice(1).every((s) => first.pts > maxPossible(s.code))) {
       obj.first = first.code;
     }
@@ -1861,14 +1866,81 @@ export function getClinchedQualifiers(
   return result;
 }
 
+export function getQualifiedThirdPlaces(matches: Match[] = MATCHES): Record<string, string> {
+  const completedGroups = Object.keys(GROUPS).filter((g) =>
+    matches
+      .filter((m) => m.phase === "group" && m.group === g)
+      .every((m) => m.status === "finished"),
+  );
+
+  if (completedGroups.length < Object.keys(GROUPS).length) return {};
+
+  return completedGroups
+    .map((group) => ({ group, row: computeStandings(group, matches)[2] }))
+    .filter((entry): entry is { group: string; row: GroupStanding } => Boolean(entry.row))
+    .sort(
+      (a, b) =>
+        b.row.pts - a.row.pts ||
+        b.row.gd - a.row.gd ||
+        b.row.gf - a.row.gf ||
+        a.group.localeCompare(b.group),
+    )
+    .slice(0, 8)
+    .reduce<Record<string, string>>((acc, entry) => {
+      acc[entry.group] = entry.row.code;
+      return acc;
+    }, {});
+}
+
 /**
  * Resolves knockout placeholders ("Vencedor Grupo X" / "Segundo Grupo Y") into
  * homeCode/awayCode whenever the group qualifiers are mathematically clinched.
- * Third-place placeholders are left untouched (cross-group pairings depend on the
- * full ranking which only finalises after every group game).
+ * Third-place placeholders are resolved with a small bipartite matching pass once
+ * all groups are complete, avoiding order-dependent gaps in the bracket.
  */
 export function resolveKnockoutTeams(matches: Match[]): Match[] {
   const clinched = getClinchedQualifiers(matches);
+  const qualifiedThirds = getQualifiedThirdPlaces(matches);
+  const thirdGroupsByRank = Object.keys(qualifiedThirds);
+  const thirdSlots = matches
+    .filter((m) => m.phase === "r32" && m.placeholder)
+    .flatMap((m) => {
+      const parts = m.placeholder!.split(/\s+vs\s+/i);
+      return parts.flatMap((part, index) => {
+        const third = /Group\s+([A-L](?:\/[A-L])*)\s+third place/i.exec(part);
+        if (!third) return [];
+        return [
+          {
+            key: `${m.id}:${index === 0 ? "home" : "away"}`,
+            allowed: third[1].split("/").map((g) => g.toUpperCase()),
+          },
+        ];
+      });
+    })
+    .sort(
+      (a, b) =>
+        a.allowed.filter((g) => thirdGroupsByRank.includes(g)).length -
+        b.allowed.filter((g) => thirdGroupsByRank.includes(g)).length,
+    );
+  const slotByGroup: Record<string, string> = {};
+  const slotToGroup: Record<string, string> = {};
+  const slotByKey = new Map(thirdSlots.map((slot) => [slot.key, slot]));
+  const tryAssignThird = (slotKey: string, seen: Set<string>): boolean => {
+    const slot = slotByKey.get(slotKey);
+    if (!slot) return false;
+    for (const group of thirdGroupsByRank) {
+      if (!slot.allowed.includes(group) || seen.has(group)) continue;
+      seen.add(group);
+      if (!slotByGroup[group] || tryAssignThird(slotByGroup[group], seen)) {
+        slotByGroup[group] = slotKey;
+        slotToGroup[slotKey] = group;
+        return true;
+      }
+    }
+    return false;
+  };
+  thirdSlots.forEach((slot) => tryAssignThird(slot.key, new Set()));
+
   const resolveSide = (s: string): string | null => {
     const win = /Vencedor\s+Grupo\s+([A-L])/i.exec(s);
     if (win) return clinched[win[1].toUpperCase()]?.first ?? null;
@@ -1881,8 +1953,10 @@ export function resolveKnockoutTeams(matches: Match[]): Match[] {
     if (m.homeCode && m.awayCode) return m;
     const parts = m.placeholder.split(/\s+vs\s+/i);
     if (parts.length !== 2) return m;
-    const hc = m.homeCode ?? resolveSide(parts[0]);
-    const ac = m.awayCode ?? resolveSide(parts[1]);
+    const thirdHomeGroup = slotToGroup[`${m.id}:home`];
+    const thirdAwayGroup = slotToGroup[`${m.id}:away`];
+    const hc = m.homeCode ?? (thirdHomeGroup ? qualifiedThirds[thirdHomeGroup] : resolveSide(parts[0]));
+    const ac = m.awayCode ?? (thirdAwayGroup ? qualifiedThirds[thirdAwayGroup] : resolveSide(parts[1]));
     if (hc === m.homeCode && ac === m.awayCode) return m;
     return { ...m, homeCode: hc, awayCode: ac };
   });
