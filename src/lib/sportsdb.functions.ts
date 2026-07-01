@@ -12,6 +12,13 @@ export type SportsDbEvent = {
   strGroup: string | null;
 };
 
+// Simple in-process cache to protect the TheSportsDB free tier
+// (rate-limited to ~30 req/min per IP; the tournament window is 40+ days).
+let cache: { at: number; events: SportsDbEvent[] } | null = null;
+const CACHE_TTL_MS = 90_000;
+const REQUEST_GAP_MS = 220;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 /**
  * Fetch a rolling window of TheSportsDB events for the FIFA World Cup
  * (league 4429). Runs server-side to avoid the CORS block TheSportsDB
@@ -19,6 +26,9 @@ export type SportsDbEvent = {
  */
 export const fetchSportsDbWindow = createServerFn({ method: "GET" }).handler(
   async (): Promise<{ events: SportsDbEvent[] }> => {
+    if (cache && Date.now() - cache.at < CACHE_TTL_MS) {
+      return { events: cache.events };
+    }
     // Full tournament window: 2026-06-10 → 2026-07-20 (Copa 2026).
     // eventsday.php has no 5-result cap; eventsseason/eventsround do.
     const start = new Date(Date.UTC(2026, 5, 10));
@@ -42,13 +52,12 @@ export const fetchSportsDbWindow = createServerFn({ method: "GET" }).handler(
       }
     };
 
-    // Parallelize in batches of 8 to stay friendly to the free tier.
+    // Sequential fetch with a small gap: the free tier bans bursts of >~30/min.
     const all: SportsDbEvent[] = [];
-    const BATCH = 8;
-    for (let i = 0; i < dates.length; i += BATCH) {
-      const chunk = dates.slice(i, i + BATCH);
-      const results = await Promise.all(chunk.map(fetchDay));
-      for (const r of results) all.push(...r);
+    for (const date of dates) {
+      const events = await fetchDay(date);
+      if (events.length) all.push(...events);
+      await sleep(REQUEST_GAP_MS);
     }
 
     // Also pull livescores + past/next league snapshots as a safety net.
@@ -79,6 +88,8 @@ export const fetchSportsDbWindow = createServerFn({ method: "GET" }).handler(
       const evHas = ev.intHomeScore != null && ev.intAwayScore != null;
       if (!prevHas && evHas) map.set(ev.idEvent, ev);
     }
-    return { events: Array.from(map.values()) };
+    const events = Array.from(map.values());
+    cache = { at: Date.now(), events };
+    return { events };
   },
 );
