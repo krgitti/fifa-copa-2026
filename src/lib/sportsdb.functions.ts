@@ -12,6 +12,13 @@ export type SportsDbEvent = {
   strGroup: string | null;
 };
 
+// Simple in-process cache to protect the TheSportsDB free tier
+// (rate-limited to ~30 req/min per IP; the tournament window is 40+ days).
+let cache: { at: number; events: SportsDbEvent[] } | null = null;
+const CACHE_TTL_MS = 90_000;
+const REQUEST_GAP_MS = 220;
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 /**
  * Fetch a rolling window of TheSportsDB events for the FIFA World Cup
  * (league 4429). Runs server-side to avoid the CORS block TheSportsDB
@@ -19,27 +26,72 @@ export type SportsDbEvent = {
  */
 export const fetchSportsDbWindow = createServerFn({ method: "GET" }).handler(
   async (): Promise<{ events: SportsDbEvent[] }> => {
-    const today = new Date();
+    if (cache && Date.now() - cache.at < CACHE_TTL_MS) {
+      return { events: cache.events };
+    }
+    // Full tournament window: 2026-06-10 → 2026-07-20 (Copa 2026).
+    // eventsday.php has no 5-result cap; eventsseason/eventsround do.
+    const start = new Date(Date.UTC(2026, 5, 10));
+    const end = new Date(Date.UTC(2026, 6, 20));
     const dates: string[] = [];
-    for (let i = -8; i <= 4; i++) {
-      const d = new Date(today);
-      d.setUTCDate(today.getUTCDate() + i);
+    for (let d = new Date(start); d <= end; d.setUTCDate(d.getUTCDate() + 1)) {
       dates.push(d.toISOString().split("T")[0]);
     }
-    const all: SportsDbEvent[] = [];
-    for (const date of dates) {
+
+    const fetchDay = async (date: string): Promise<SportsDbEvent[]> => {
       try {
         const res = await fetch(
           `https://www.thesportsdb.com/api/v1/json/3/eventsday.php?d=${date}&l=4429`,
           { cache: "no-store" },
         );
-        if (!res.ok) continue;
+        if (!res.ok) return [];
         const json = (await res.json()) as { events?: SportsDbEvent[] };
-        if (json?.events?.length) all.push(...json.events);
+        return json?.events ?? [];
       } catch {
-        // ignore per-day failures
+        return [];
       }
+    };
+
+    // Sequential fetch with a small gap: the free tier bans bursts of >~30/min.
+    const all: SportsDbEvent[] = [];
+    for (const date of dates) {
+      const events = await fetchDay(date);
+      if (events.length) all.push(...events);
+      await sleep(REQUEST_GAP_MS);
     }
-    return { events: all };
+
+    // Also pull livescores + past/next league snapshots as a safety net.
+    try {
+      const [live, past, next] = await Promise.all([
+        fetch("https://www.thesportsdb.com/api/v1/json/3/eventspastleague.php?id=4429", { cache: "no-store" }).then((r) => r.ok ? r.json() : { events: [] }).catch(() => ({ events: [] })),
+        fetch("https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=4429", { cache: "no-store" }).then((r) => r.ok ? r.json() : { events: [] }).catch(() => ({ events: [] })),
+        fetch("https://www.thesportsdb.com/api/v1/json/3/eventslive.php?s=Soccer", { cache: "no-store" }).then((r) => r.ok ? r.json() : { events: [] }).catch(() => ({ events: [] })),
+      ]);
+      type ExtEv = SportsDbEvent & { idLeague?: string; strLeague?: string };
+      const sources = [live, past, next] as Array<{ events?: ExtEv[] }>;
+      for (const src of sources) {
+        for (const ev of src.events ?? []) {
+          const anyEv = ev as SportsDbEvent & { idLeague?: string; strLeague?: string };
+          if (anyEv.idLeague && anyEv.idLeague !== "4429") continue;
+          if (!anyEv.idLeague && anyEv.strLeague && !anyEv.strLeague.includes("World Cup")) continue;
+          all.push(ev);
+        }
+      }
+    } catch {
+      // ignore
+    }
+
+    // Dedupe by idEvent, keeping the entry with a score if present.
+    const map = new Map<string, SportsDbEvent>();
+    for (const ev of all) {
+      const prev = map.get(ev.idEvent);
+      if (!prev) { map.set(ev.idEvent, ev); continue; }
+      const prevHas = prev.intHomeScore != null && prev.intAwayScore != null;
+      const evHas = ev.intHomeScore != null && ev.intAwayScore != null;
+      if (!prevHas && evHas) map.set(ev.idEvent, ev);
+    }
+    const events = Array.from(map.values());
+    cache = { at: Date.now(), events };
+    return { events };
   },
 );
