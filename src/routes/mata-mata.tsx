@@ -141,7 +141,7 @@ function MataMata() {
                     {weekday} · {date}
                   </div>
                   {ms.map((m) => (
-                    <MatchCard key={m.id} match={m} compact />
+                    <MatchCard key={m.id} match={m} compact dense />
                   ))}
                 </div>
               );
