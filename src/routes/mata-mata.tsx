@@ -70,35 +70,58 @@ function MataMata() {
       </p>
 
       <div className="mt-6 overflow-x-auto pb-4">
-        <div className="flex min-w-[1200px] gap-4">
-          {columns.map((col) => (
-            <div key={col.key} className="flex min-w-[280px] flex-1 flex-col">
+        <div className="flex min-w-[1100px] gap-0">
+          {columns.map((col, colIdx) => (
+            <div
+              key={col.key}
+              className="flex min-w-[220px] flex-1 flex-col px-3"
+            >
               <div
-                className={`mb-3 rounded-lg border border-border bg-card/50 px-3 py-2 text-center text-sm font-bold uppercase tracking-wider ${
+                className={`mb-3 rounded-lg border border-border bg-card/50 px-2 py-1.5 text-center text-xs font-bold uppercase tracking-wider ${
                   col.key === "final" ? "text-accent" : ""
                 }`}
               >
                 {col.label}
               </div>
-              <div className="flex flex-1 flex-col justify-around gap-4">
+              <div className="relative flex flex-1 flex-col justify-around gap-3">
                 {col.days.length === 0 ? (
-                  <div className="rounded-lg border border-dashed border-border/60 p-6 text-center text-xs text-muted-foreground">
+                  <div className="rounded-lg border border-dashed border-border/60 p-4 text-center text-[11px] text-muted-foreground">
                     Aguardando confrontos
                   </div>
                 ) : (
                   col.days.map(({ day, matches: ms }) => {
                     const { date, weekday } = formatBrasilia(ms[0].kickoffUTC);
                     return (
-                      <div key={day} className="space-y-2">
-                        <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                      <div key={day} className="space-y-1.5">
+                        <div className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
                           {weekday} · {date}
                         </div>
                         {ms.map((m) => (
-                          <MatchCard key={m.id} match={m} compact />
+                          <div key={m.id} className="relative">
+                            {colIdx < columns.length - 1 && (
+                              <span
+                                aria-hidden
+                                className="pointer-events-none absolute left-full top-1/2 h-px w-3 bg-border"
+                              />
+                            )}
+                            {colIdx > 0 && (
+                              <span
+                                aria-hidden
+                                className="pointer-events-none absolute right-full top-1/2 h-px w-3 bg-border"
+                              />
+                            )}
+                            <MatchCard match={m} compact dense />
+                          </div>
                         ))}
                       </div>
                     );
                   })
+                )}
+                {colIdx < columns.length - 1 && (
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute right-0 top-4 bottom-4 w-px translate-x-3 bg-border"
+                  />
                 )}
               </div>
             </div>
