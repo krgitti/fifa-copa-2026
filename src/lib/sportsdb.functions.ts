@@ -67,7 +67,9 @@ export const fetchSportsDbWindow = createServerFn({ method: "GET" }).handler(
         fetch("https://www.thesportsdb.com/api/v1/json/3/eventsnextleague.php?id=4429", { cache: "no-store" }).then((r) => r.ok ? r.json() : { events: [] }).catch(() => ({ events: [] })),
         fetch("https://www.thesportsdb.com/api/v1/json/3/eventslive.php?s=Soccer", { cache: "no-store" }).then((r) => r.ok ? r.json() : { events: [] }).catch(() => ({ events: [] })),
       ]);
-      for (const src of [live, past, next] as Array<{ events?: SportsDbEvent[] & Array<{ strLeague?: string; idLeague?: string }> }>) {
+      type ExtEv = SportsDbEvent & { idLeague?: string; strLeague?: string };
+      const sources = [live, past, next] as Array<{ events?: ExtEv[] }>;
+      for (const src of sources) {
         for (const ev of src.events ?? []) {
           const anyEv = ev as SportsDbEvent & { idLeague?: string; strLeague?: string };
           if (anyEv.idLeague && anyEv.idLeague !== "4429") continue;
